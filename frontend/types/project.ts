@@ -1,7 +1,18 @@
 export interface Project {
-  id: string;
+  id: number;
   title: string;
   totalTasks: number;
   incompleteTasks: number;
-  userRole: 'owner' | 'member';
+  userRole: 'OWNER' | 'MEMBER';
+  created_at: string;
+}
+
+export interface ProjectMember {
+  id: number;
+  email: string;
+  role: 'OWNER' | 'MEMBER';
+}
+
+export interface ProjectDetails extends Project {
+  members: ProjectMember[];
 }

@@ -4,10 +4,17 @@ import { fetchUserProjects, createProject } from '@/utils/api';
 import { ProjectsTable } from '@/components/ProjectsTable';
 import { NewProjectModal } from '@/components/NewProjectModal';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import {useRouter} from "next/router";
 
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const queryClient = useQueryClient();
+  const router = useRouter();
+
+  const handleProjectClick = (projectId: number) => {
+    router.push(`/projects/${projectId}`);
+  };
+
 
   const { data: projects = [], isLoading, error } = useQuery({
     queryKey: ['projects'],

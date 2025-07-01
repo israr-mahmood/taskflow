@@ -2,6 +2,7 @@
 from flask import Blueprint, request, jsonify
 from backend.app.db.database import db
 from backend.app.models.project import Project, ProjectMember, UserRole
+from backend.app.models.users import Users
 from backend.app.utils.auth import token_required
 from sqlalchemy import func, case
 from backend.app.models.task import Task
@@ -119,3 +120,66 @@ def add_project_member(current_user, project_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': 'Failed to add member'}), 500
+
+@projects_bp.route('/api/projects/<int:project_id>', methods=['GET'])
+@token_required
+def get_project_details(current_user, project_id):
+    # Check if user is a member of the project
+    member = ProjectMember.query.filter_by(
+        project_id=project_id,
+        user_id=current_user.id
+    ).first()
+
+    if not member:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    # Get project details with task statistics
+    project_details = (
+        db.session.query(
+            Project,
+            ProjectMember.role,
+            func.count(Task.id).label('total_tasks'),
+            func.count(
+                case(
+                    (Task.completed == False, Task.id),
+                    else_=None
+                )
+            ).label('incomplete_tasks')
+        )
+        .join(ProjectMember, Project.id == ProjectMember.project_id)
+        .outerjoin(Task, Project.id == Task.project_id)
+        .filter(Project.id == project_id)
+        .group_by(Project.id, ProjectMember.role)
+        .first()
+    )
+
+    if not project_details:
+        return jsonify({'error': 'Project not found'}), 404
+
+    project, role, total_tasks, incomplete_tasks = project_details
+
+    # Get project members
+    members = (
+        db.session.query(
+            Users.id,
+            Users.email,
+            ProjectMember.role
+        )
+        .join(ProjectMember, Users.id == ProjectMember.user_id)
+        .filter(ProjectMember.project_id == project_id)
+        .all()
+    )
+
+    return jsonify({
+        'id': project.id,
+        'title': project.title,
+        'totalTasks': total_tasks or 0,
+        'incompleteTasks': incomplete_tasks or 0,
+        'userRole': role.value,
+        'created_at': project.created_at.isoformat(),
+        'members': [{
+            'id': member.id,
+            'email': member.email,
+            'role': member.role.value
+        } for member in members]
+    })
