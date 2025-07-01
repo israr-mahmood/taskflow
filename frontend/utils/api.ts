@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/store/authStore';
+import { Project } from '@/types/project';
 
 export async function registerUser(email: string, password: string) {
   const res = await fetch('http://127.0.0.1:5000/api/auth/register', {
@@ -49,4 +50,17 @@ export async function fetchUserData() {
     console.error('Failed to fetch user data:', error);
     throw error;
   }
+}
+
+export async function fetchUserProjects(): Promise<Project[]> {
+  const response = await authenticatedFetch('http://127.0.0.1:5000/api/projects');
+  return response.json();
+}
+
+export async function createProject(title: string): Promise<Project> {
+  const response = await authenticatedFetch('http://127.0.0.1:5000/api/projects', {
+    method: 'POST',
+    body: JSON.stringify({ title }),
+  });
+  return response.json();
 }

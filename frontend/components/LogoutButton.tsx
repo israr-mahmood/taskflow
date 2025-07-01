@@ -7,7 +7,7 @@ export function LogoutButton() {
 
   const handleLogout = () => {
     logout();
-    router.push('/auth');
+    router.push('/');
   };
 
   return (
