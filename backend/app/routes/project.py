@@ -2,7 +2,7 @@
 from flask import Blueprint, request, jsonify
 from backend.app.db.database import db
 from backend.app.models.project import Project, ProjectMember, UserRole
-from backend.app.models.users import Users
+from backend.app.models.user import User
 from backend.app.utils.auth import token_required
 from sqlalchemy import func, case
 from backend.app.models.task import Task
@@ -161,11 +161,11 @@ def get_project_details(current_user, project_id):
     # Get project members
     members = (
         db.session.query(
-            Users.id,
-            Users.email,
+            User.id,
+            User.email,
             ProjectMember.role
         )
-        .join(ProjectMember, Users.id == ProjectMember.user_id)
+        .join(ProjectMember, User.id == ProjectMember.user_id)
         .filter(ProjectMember.project_id == project_id)
         .all()
     )

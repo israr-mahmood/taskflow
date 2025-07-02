@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import request, jsonify
 import jwt
-from backend.app.models.users import Users
+from backend.app.models.user import User
 from backend.app.config import Config
 
 
@@ -28,7 +28,7 @@ def token_required(f):
                 Config.SECRET_KEY,
                 algorithms=[Config.JWT_ALGORITHM]
             )
-            current_user = Users.query.get(data['user_id'])
+            current_user = User.query.get(data['user_id'])
 
             if not current_user:
                 return jsonify({'error': 'Invalid user'}), 401

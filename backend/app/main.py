@@ -4,6 +4,7 @@ from backend.app.db.database import db
 from backend.app.routes.auth import router as auth_router
 from backend.app.config import Config
 from backend.app.routes.project import projects_bp
+from backend.app.routes.task import tasks_bp
 
 def create_app():
     app = Flask(__name__)
@@ -33,6 +34,7 @@ def create_app():
 
     app.register_blueprint(auth_router, url_prefix="/api/auth")
     app.register_blueprint(projects_bp)
+    app.register_blueprint(tasks_bp)
 
     return app
 

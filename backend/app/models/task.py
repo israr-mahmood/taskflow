@@ -4,15 +4,15 @@ from enum import Enum
 
 
 class TaskPriority(Enum):
-    LOW = 'low'
-    MEDIUM = 'medium'
-    HIGH = 'high'
+    LOW = 'LOW'
+    MEDIUM = 'MEDIUM'
+    HIGH = 'HIGH'
 
 
 class TaskStatus(Enum):
-    TODO = 'todo'
-    IN_PROGRESS = 'in_progress'
-    DONE = 'done'
+    TODO = 'TODO'
+    IN_PROGRESS = 'IN_PROGRESS'
+    DONE = 'DONE'
 
 
 class Task(db.Model):
@@ -35,6 +35,10 @@ class Task(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # Add relationships
+    assigned_user = db.relationship('User', foreign_keys=[assigned_to], backref='assigned_tasks')
+    creator_user = db.relationship('User', foreign_keys=[created_by], backref='created_tasks')
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -48,5 +52,13 @@ class Task(db.Model):
             'assigned_to': self.assigned_to,
             'created_by': self.created_by,
             'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat()
+            'updated_at': self.updated_at.isoformat(),
+            'assignedUser': {
+                'id': self.assigned_user.id,
+                'email': self.assigned_user.email
+            } if self.assigned_user else None,
+            'creator': {
+                'id': self.creator_user.id,
+                'email': self.creator_user.email
+            } if self.creator_user else None
         }

@@ -3,6 +3,9 @@ import { useRouter } from 'next/router';
 import { fetchProjectDetails } from '@/utils/api';
 import { ProjectDetails } from '@/types/project';
 import Link from 'next/link';
+import { Task, TaskStatus } from '@/types/task';
+import { CreateTaskModal } from '@/components/CreateTaskModal';
+import { fetchProjectTasks, createTask, updateTaskStatus } from '@/utils/api';
 
 export default function ProjectPage() {
   const router = useRouter();
@@ -10,12 +13,50 @@ export default function ProjectPage() {
   const [project, setProject] = useState<ProjectDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (id) {
+      loadProjectDetails();
+      loadTasks();
+    }
+  }, [id]);
 
   useEffect(() => {
     if (id) {
       loadProjectDetails();
     }
   }, [id]);
+
+  const loadTasks = async () => {
+    try {
+      const tasksData = await fetchProjectTasks(Number(id));
+      setTasks(tasksData);
+    } catch (error) {
+      console.error('Failed to load tasks:', error);
+    }
+  };
+
+  const handleCreateTask = async (data: { title: string; description?: string; assigned_to?: number }) => {
+    try {
+      const newTask = await createTask(Number(id), data);
+      setTasks([...tasks, newTask]);
+    } catch (error) {
+      console.error('Failed to create task:', error);
+    }
+  };
+
+  const handleStatusChange = async (taskId: number, newStatus: TaskStatus) => {
+    try {
+      const updatedTask = await updateTaskStatus(taskId, newStatus);
+      setTasks(tasks.map(task =>
+        task.id === taskId ? updatedTask : task
+      ));
+    } catch (error) {
+      console.error('Failed to update task status:', error);
+    }
+  };
 
   const loadProjectDetails = async () => {
     try {
@@ -146,6 +187,75 @@ export default function ProjectPage() {
                 ))}
               </tbody>
             </table>
+
+            <div className="bg-white shadow rounded-lg p-6 mt-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">Tasks</h2>
+                <button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="px-4 py-2 text-sm font-medium text-white bg-teal-600 rounded-md hover:bg-teal-700"
+                >
+                  Create Task
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Title
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Assigned To
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {tasks.map((task) => (
+                      <tr
+                        key={task.id}
+                        className="hover:bg-gray-50 cursor-pointer"
+                        onClick={() => router.push(`/tasks/${task.id}`)}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{task.title}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-500">
+                            {task.assignedUser?.email || 'Unassigned'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                          <select
+                            value={task.status}
+                            onChange={(e) => handleStatusChange(task.id, e.target.value as TaskStatus)}
+                            className="text-sm text-gray-900 border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                          >
+                            {Object.values(TaskStatus).map((status) => (
+                              <option key={status} value={status}>
+                                {status}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <CreateTaskModal
+              isOpen={isCreateModalOpen}
+              onClose={() => setIsCreateModalOpen(false)}
+              onSubmit={handleCreateTask}
+              members={project?.members || []}
+            />
+
           </div>
         </div>
       </div>

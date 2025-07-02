@@ -3,21 +3,14 @@ from datetime import datetime
 from typing import Optional
 from enum import Enum
 
-class TaskPrioritySchema(str, Enum):
-    LOW = 'low'
-    MEDIUM = 'medium'
-    HIGH = 'high'
+from backend.app.models.task import TaskPriority, TaskStatus
 
-class TaskStatusSchema(str, Enum):
-    TODO = 'todo'
-    IN_PROGRESS = 'in_progress'
-    DONE = 'done'
 
 class TaskCreate(BaseModel):
     title: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = None
-    priority: TaskPrioritySchema = TaskPrioritySchema.MEDIUM
-    status: TaskStatusSchema = TaskStatusSchema.TODO
+    priority: TaskPriority = TaskPriority.MEDIUM
+    status: TaskStatus = TaskStatus.TODO
     due_date: Optional[datetime] = None
     assigned_to: Optional[int] = None
 
